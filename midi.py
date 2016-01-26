@@ -46,25 +46,46 @@ def _parse_track(f):
                 raise IOError('Illegal running status in track message.')
 
             status = running_status
-        elif status != 0xff: 
+        else:
+            status = f.read(1)
+
+        if status != 0xff:
             # Meta-messages does not update running status.
             running_status = status
 
-        if status == 0xff:
-            #message = _parse_meta_msg(delta, f)
-            raise NotImplementedError('Meta-messages')
-        elif status in [0xf0, 0xf7]:
-            #message = _parse_sysex_msg(delta, f)
-            raise NotImplementedError('Sysex-messages')
-        else:
-            message = _parse_msg(delta, f)
+        message = _parse_msg(status, f)
+        message.delta = delta
 
         track.append(message)
 
     return track
 
-def _parse_msg(delta, f):
-    return "lol"
+message_specs = {
+    0x80: ('note_off', 3, ('channel', 'note', 'velocity')),
+    0x90: ('note_on', 3, ('channel', 'note', 'velocity')),
+    0xa0: ('polytouch', 3, ('channel', 'note', 'value')),
+    0xb0: ('control_change', 3, ('channel', 'controller', 'value')),
+    0xc0: ('program_change', 2, ('channel', 'program')),
+    0xd0: ('aftertouch', 2, ('channel', 'value')),
+    0xe0: ('pitchwheel', 3, ('channel', 'pitch')),
+}
+
+def _parse_msg(status, f):
+    if status == 0xff:
+        raise NotImplementedError('Meta-messages')
+    elif status in [0xf0, 0xf7]:
+        raise NotImplementedError('Sysex-messages')
+
+    spec = message_specs.get(status)
+    if not spec:
+        spec = message_specs.get(status & 0xf0)
+        status_data = status & 0x0f
+    if not spec:
+        raise NotImplementedError('Unknown msg type')
+
+    msg = MidiMessage(spec[0])
+
+    return msg
 
 class MidiFile(object):
     def __init__(self):
@@ -72,6 +93,10 @@ class MidiFile(object):
 
 class MidiTrack(list):
     pass
+
+class MidiMessage(object):
+    def __init__(self, type_):
+        self.type = type_
 
 def _read_long(f):
     d = bytearray(f.read(4))

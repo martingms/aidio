@@ -60,7 +60,7 @@ def _parse_track(f):
 
     return track
 
-message_specs = {
+_message_specs = {
     0x80: ('note_off', 3, ('channel', 'note', 'velocity')),
     0x90: ('note_on', 3, ('channel', 'note', 'velocity')),
     0xa0: ('polytouch', 3, ('channel', 'note', 'value')),
@@ -76,9 +76,9 @@ def _parse_msg(status, f):
     elif status in [0xf0, 0xf7]:
         raise NotImplementedError('Sysex-messages')
 
-    spec = message_specs.get(status)
+    spec = _message_specs.get(status)
     if not spec:
-        spec = message_specs.get(status & 0xf0)
+        spec = _message_specs.get(status & 0xf0)
         status_data = status & 0x0f
     if not spec:
         raise NotImplementedError('Unknown msg type')
@@ -94,9 +94,9 @@ class MidiFile(object):
 class MidiTrack(list):
     pass
 
-class MidiMessage(object):
-    def __init__(self, type_):
-        self.type = type_
+class MidiMessage(dict):
+    def __init__(self, type):
+        self['type'] = type
 
 def _read_long(f):
     d = bytearray(f.read(4))

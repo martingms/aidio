@@ -57,3 +57,9 @@ def _group(iterable, n):
 if __name__ == '__main__':
     import sys
     write_wave('test.wav', islice(square(880), 44100 * 10))
+
+    #synth = createSynth()
+    #while True:
+    #    synth.play(x_tics)
+    #    midi_event?
+    #    synth.updateParams(midi_stuffs)

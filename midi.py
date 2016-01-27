@@ -4,6 +4,7 @@
 # https://github.com/olemb/mido/blob/master/mido/messages.py
 
 import io
+import sys # TODO: remove
 
 def parse_file(filename):
     midi_file = MidiFile()
@@ -110,7 +111,7 @@ def _read_variable_int(f):
     i = 0
 
     while True:
-        d = f.read(1)
+        d = bytearray(f.read(1))[0] # FIXME: Really the best way?
         i = (i << 7) | (d & 0x7f)
         if d < 0x80:
             return i

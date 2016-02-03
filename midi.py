@@ -4,7 +4,9 @@
 # https://github.com/olemb/mido/blob/master/mido/messages.py
 
 import io
-import sys # TODO: remove
+import sys
+from collections import namedtuple
+
 
 def parse_file(filename):
     midi_file = MidiFile()
@@ -20,9 +22,9 @@ def parse_file(filename):
         midi_file.ticks_per_beat = _read_short(f)
 
         # Skip rest of header.
-        f.read(header_size - 6)
+        f.seek(header_size - 6, 1)
 
-        for i in xrange(num_tracks):
+        for i in range(num_tracks):
             midi_file.tracks.append(_parse_track(f))
 
     return midi_file
@@ -41,34 +43,38 @@ def _parse_track(f):
     while f.tell() - start < length:
         delta = _read_variable_int(f)
 
-        status = f.peek(1)[:1] # peek(1) often returns >> 1 bytes.
+        status = ord(f.peek(1)[:1]) # peek(1) often returns >> 1 bytes.
         if status < 0x80:
             if not running_status:
                 raise IOError('Illegal running status in track message.')
 
             status = running_status
         else:
-            status = f.read(1)
+            status = ord(f.read(1))
 
         if status != 0xff:
             # Meta-messages does not update running status.
             running_status = status
 
         message = _parse_msg(status, f)
+        if message is None:
+            continue
+
         message.delta = delta
 
         track.append(message)
 
     return track
 
+_MsgSpec = namedtuple('MsgSpec', ('type', 'length', 'fields'))
 _message_specs = {
-    0x80: ('note_off', 3, ('channel', 'note', 'velocity')),
-    0x90: ('note_on', 3, ('channel', 'note', 'velocity')),
-    0xa0: ('polytouch', 3, ('channel', 'note', 'value')),
-    0xb0: ('control_change', 3, ('channel', 'controller', 'value')),
-    0xc0: ('program_change', 2, ('channel', 'program')),
-    0xd0: ('aftertouch', 2, ('channel', 'value')),
-    0xe0: ('pitchwheel', 3, ('channel', 'pitch')),
+    0x80: _MsgSpec('note_off', 3, ('channel', 'note', 'velocity')),
+    0x90: _MsgSpec('note_on', 3, ('channel', 'note', 'velocity')),
+    0xa0: _MsgSpec('polytouch', 3, ('channel', 'note', 'value')),
+    0xb0: _MsgSpec('control_change', 3, ('channel', 'controller', 'value')),
+    0xc0: _MsgSpec('program_change', 2, ('channel', 'program')),
+    0xd0: _MsgSpec('aftertouch', 2, ('channel', 'value')),
+    0xe0: _MsgSpec('pitchwheel', 3, ('channel', 'pitch')),
 }
 
 def _parse_msg(status, f):
@@ -84,7 +90,13 @@ def _parse_msg(status, f):
     if not spec:
         raise NotImplementedError('Unknown msg type')
 
-    msg = MidiMessage(spec[0])
+    msg = MidiMessage({'type': spec.type})
+
+    length = spec.length
+    fields = spec.fields
+    if status_data:
+        msg[fields[0]] = status_data
+        fields = fields[1:]
 
     return msg
 
@@ -96,8 +108,7 @@ class MidiTrack(list):
     pass
 
 class MidiMessage(dict):
-    def __init__(self, type):
-        self['type'] = type
+    pass
 
 def _read_long(f):
     d = bytearray(f.read(4))
@@ -117,4 +128,4 @@ def _read_variable_int(f):
             return i
 
 if __name__ == '__main__':
-    parse_file('smas61.mid')
+    parse_file('data/smas61.mid')

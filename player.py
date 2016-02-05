@@ -2,7 +2,7 @@
 import io
 import sys
 import math
-from itertools import islice
+from itertools import islice, count
 
 import midi.files
 import synth.generators
@@ -14,24 +14,30 @@ TEMPO = 500000
 class Player(object):
     def __init__(self):
         self.notes = {}
+        self.f = io.open('test.pcm', 'wb')
 
     def mix(self):
-        return synth.utils.mix(*[v for _, v in self.notes.items()])
+        inputs = [v for _, v in self.notes.items()]
+        if len(inputs) == 0:
+            return count(0)
+
+        return synth.utils.mix(*inputs)
 
     def update(self, note, state='on'):
         if state == 'off':
-            try:
+            if note in self.notes:
                 del self.notes[note]
-            except KeyError:
-                raise Exception('off on note that was never on')
-
-        if note not in self.notes:
-            self.notes[note] = synth.generators.sine(synth.utils.midi_to_freq(note))
+        else:
+            if note not in self.notes:
+                self.notes[note] = synth.generators.sine(synth.utils.midi_to_freq(note))
 
     def play(self, n_samples):
-        for sample in self.mix():
-            print(sample)
-        #synth.sinks.write_pcm(sys.stdout.buffer, islice(self.mix(), n_samples))
+        #for sample in self.mix():
+        #    if sample >= 1.0 or sample <= -1.0:
+        #        raise Exception("out of range!")
+        #    print(sample)
+        synth.sinks.write_pcm(self.f, islice(synth.utils.clip(self.mix()), n_samples))
+        #synth.sinks.write_wave(self.f, islice(self.mix(), n_samples))
 
 
 player = Player()

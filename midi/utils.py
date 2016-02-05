@@ -14,9 +14,3 @@ def read_variable_int(f):
         i = (i << 7) | (d & 0x7f)
         if d < 0x80:
             return i
-
-def read_nibble(f):
-    return ord(f.read(1)) & 0x0f
-
-def read_byte_int(f):
-    return ord(f.read(1))

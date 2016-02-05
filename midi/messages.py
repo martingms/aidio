@@ -1,8 +1,13 @@
-from collections import namedtuple
+from copy import deepcopy
 
 from . import utils
 
 class MidiMessage(dict):
+    def copy(self):
+        # TODO: Support changing fields here.
+        # TODO: Is a shallow copy sufficient here?
+        return deepcopy(self)
+
     def __repr__(self):
         return '<msg {0} delta={1} data={2}>'\
             .format(self.type, self.delta, super().__repr__())

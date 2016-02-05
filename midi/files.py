@@ -3,16 +3,48 @@ import io
 from . import utils
 from . import messages
 
-class MidiFile(list):
+class MidiFile(object):
+    def __init__(self):
+        self.tracks = []
+
     def __repr__(self):
-        tracks = map(str, self)
-        return '<MidiFile type={} tpb={}\n' + '\n'.join(tracks) + '>'\
+        track_reprs = map(str, self.tracks)
+        return '<MidiFile type={} tpb={}\n    ' + '\n    '.join(track_reprs) + '>'\
                 .format(self.type, self.ticks_per_beat)
+
+    def __iter__(self):
+        for msg in self.merge_tracks():
+            yield msg
+
+    # TODO: generator-ize
+    def merge_tracks(self):
+        merged = MidiTrack()
+
+        # Convert deltas to absolute time.
+        for track in self.tracks:
+            now = 0
+            for msg in track:
+                now += msg.delta
+
+                # TODO: filter out track-specific meta-messages.
+                new_msg = msg.copy()
+                new_msg.delta = now
+                merged.append(new_msg)
+
+        merged.sort(key=lambda m: m.delta)
+
+        # Convert back to deltas.
+        last = 0
+        for msg in merged:
+            msg.delta -= last
+            last += msg.delta
+
+        return merged
 
 class MidiTrack(list):
     def __repr__(self):
         messages = map(str, self)
-        return '<MidiTrack\n' + '\n'.join(messages) + '>'
+        return '<MidiTrack\n    ' + '\n    '.join(messages) + '>'
 
 def load(f):
     midi_file = MidiFile()
@@ -30,7 +62,7 @@ def load(f):
     f.seek(header_size - 6, 1)
 
     for i in range(num_tracks):
-        midi_file.append(load_track(f))
+        midi_file.tracks.append(load_track(f))
 
     return midi_file
 

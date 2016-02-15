@@ -7,6 +7,9 @@ class MidiFile(object):
     def __init__(self):
         self.tracks = []
 
+    def track(self, i):
+        return self.tracks[i]
+
     def __repr__(self):
         track_reprs = map(str, self.tracks)
         return '<MidiFile type={} tpb={}\n    ' + '\n    '.join(track_reprs) + '>'\

@@ -64,12 +64,35 @@ def _parse_pitchwheel(status, f):
     }
 
 def _parse_meta(status, f):
-    type = ord(f.read(1)) # TODO: parse to string
+    meta_type = ord(f.read(1))
+    if meta_type >= 128:
+        raise IOError('illegal meta msg type')
+
+    out = {'meta_type': meta_type}
+
     length = utils.read_variable_int(f)
+
+    spec = _META_SPECS.get(meta_type)
+
+    if spec is None:
+        # Not implemented yet, read its data as raw bytes and return.
+        out['data'] = f.read(length)
+        return out
+
+    out['meta_type'] = spec[0]
+    out.update(spec[1](length, f))
+
+    return out
+
+def _parse_meta_set_tempo(length, f):
+    d = f.read(length)
     return {
-        'type': type,
-        'data': f.read(length),
+        'tempo': (d[0] << 16) | (d[1] << 8) | d[2],
     }
+
+_META_SPECS = {
+    0x51: ('set_tempo', _parse_meta_set_tempo),
+}
 
 _MESSAGE_SPECS = {
     0x80: ('note_off', _parse_note_off),

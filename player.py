@@ -2,7 +2,7 @@
 import io
 import sys
 import math
-from itertools import islice, count
+from itertools import islice, repeat
 
 import midi.files
 import synth.generators
@@ -13,13 +13,11 @@ TEMPO = 500000
 
 class Player(object):
     def __init__(self):
-        self.notes = {}
+        self.notes = {'base': repeat(0.0)}
         self.f = io.open('test.pcm', 'wb')
 
     def mix(self):
         inputs = [v for _, v in self.notes.items()]
-        if len(inputs) == 0:
-            return count(0)
 
         return synth.utils.mix(*inputs)
 
@@ -32,21 +30,20 @@ class Player(object):
                 self.notes[note] = synth.generators.sine(synth.utils.midi_to_freq(note))
 
     def play(self, n_samples):
-        #for sample in self.mix():
-        #    if sample >= 1.0 or sample <= -1.0:
-        #        raise Exception("out of range!")
-        #    print(sample)
         synth.sinks.write_pcm(self.f, islice(synth.utils.clip(self.mix()), n_samples))
         #synth.sinks.write_wave(self.f, islice(self.mix(), n_samples))
 
 
 player = Player()
 
-with io.open('data/smas61.mid', 'rb') as f:
-    smas61 = midi.files.load(f)
-    seconds_per_tick = (TEMPO / 1000000.0) / smas61.ticks_per_beat
+with io.open('data/smb1-Theme.mid', 'rb') as f:
+    smb1 = midi.files.load(f)
+    seconds_per_tick = (TEMPO / 1000000.0) / smb1.ticks_per_beat
 
-    for msg in smas61:
+    #for msg in smb1.track(1):
+    for msg in smb1:
+        if msg.type == 'meta' and msg['meta_type'] == 'set_tempo':
+            seconds_per_tick = (msg['tempo']/ 1000000.0) / smb1.ticks_per_beat
         if msg.type not in ('note_on', 'note_off'):
             continue
 

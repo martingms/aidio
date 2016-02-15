@@ -23,5 +23,3 @@ def write_pcm(f, samples, sample_width=2, rate=44100, bufsize=2048):
         frames = [struct.pack('h', int(max_amplitude * sample)) for sample in chunk]
         f.write(b''.join(frames))
         f.flush() # Needed?
-
-    f.close()

@@ -18,7 +18,7 @@ def square(freq, rate=44100, amplitude=0.5):
     for v in sine(freq, rate, amplitude):
         if v > 0:
             yield amplitude
-        if v < 0:
+        elif v < 0:
             yield -amplitude
         else:
             yield 0.0

@@ -12,8 +12,8 @@ class MidiFile(object):
 
     def __repr__(self):
         track_reprs = map(str, self.tracks)
-        return '<MidiFile type={} tpb={}\n    ' + '\n    '.join(track_reprs) + '>'\
-                .format(self.type, self.ticks_per_beat)
+        return '<MidiFile type={} tpb={}\n    {}>'\
+                .format(self.type, self.ticks_per_beat, '\n    '.join(track_reprs))
 
     def __iter__(self):
         for msg in self.merge_tracks():

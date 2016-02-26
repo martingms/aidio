@@ -5,7 +5,7 @@ import functools
 
 import midi.files
 from synth.utils import play_midifile
-from synth.sinks import write_pcm
+from synth.sinks import write_pcm, pyaudio_sink
 from synth.generators import sine, square
 from synth.instruments import MonoSynth, ADSRMonoSynth
 
@@ -21,4 +21,5 @@ instruments = {
     2: ADSRMonoSynth(square),
 }
 
-write_pcm(sys.stdout.buffer, play_midifile(mf, instruments))
+#write_pcm(sys.stdout.buffer, play_midifile(mf, instruments))
+pyaudio_sink(play_midifile(mf, instruments))

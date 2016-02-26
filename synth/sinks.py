@@ -23,3 +23,19 @@ def write_pcm(f, samples, sample_width=2, rate=44100, bufsize=2048):
         frames = [struct.pack('h', int(max_amplitude * sample)) for sample in c]
         f.write(b''.join(frames))
         f.flush() # Needed?
+
+def pyaudio_sink(samples, sample_width=2, rate=44100, bufsize=2048):
+    # Don't want stuff to fail if this sink isn't used.
+    import pyaudio
+
+    p = pyaudio.PyAudio()
+
+    f = p.open(format=p.get_format_from_width(sample_width),
+               channels=1,
+               rate=rate,
+               output=True)
+
+    # Make flush a noop, since write_pcm expects it to exist.
+    f.flush = lambda: None
+
+    write_pcm(f, samples, sample_width, rate, bufsize)

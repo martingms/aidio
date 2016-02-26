@@ -1,4 +1,5 @@
 import operator
+
 from functools import reduce
 from itertools import islice
 
@@ -27,13 +28,8 @@ def midi_to_freq(n):
     return _MIDI_NOTE_FREQS[n]
 
 _DEFAULT_MIDI_TEMPO = 500000
-
 def play_midifile(mf, instruments):
-    def pass_msg(msg):
-        for channel, instrument in instruments.items():
-            msg_channel = msg.get('channel')
-            if msg_channel is None or msg_channel == channel:
-                instrument.input(msg)
+    audio = clip(mix(*[i for i in instruments.values()]))
 
     seconds_per_tick = (_DEFAULT_MIDI_TEMPO / 1000000.0) / mf.ticks_per_beat
     for msg in mf:
@@ -44,7 +40,9 @@ def play_midifile(mf, instruments):
 
         if msg.delta > 0:
             n_samples = int(44100 * seconds_per_tick * msg.delta)
-            audio = clip(mix(*[i for i in instruments.values()]))
             yield from islice(audio, n_samples)
 
-        pass_msg(msg)
+        for channel, instrument in instruments.items():
+            msg_channel = msg.get('channel')
+            if msg_channel is None or msg_channel == channel:
+                instrument.input(msg)

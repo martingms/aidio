@@ -7,7 +7,7 @@ import midi.files
 from synth.utils import play_midifile
 from synth.sinks import write_pcm
 from synth.generators import sine, square
-from synth.instruments import MonoSynth
+from synth.instruments import MonoSynth, ADSRMonoSynth
 
 if len(sys.argv) < 2:
     print('usage: {} <midifile>'.format(sys.argv[0]))
@@ -17,8 +17,8 @@ with io.open(sys.argv[1], 'rb') as f:
     mf = midi.files.load(f)
 
 instruments = {
-    1: MonoSynth(square),
-    2: MonoSynth(square),
+    1: ADSRMonoSynth(square),
+    2: ADSRMonoSynth(square),
 }
 
 write_pcm(sys.stdout.buffer, play_midifile(mf, instruments))

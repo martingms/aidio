@@ -17,7 +17,7 @@ def amplify(signal, factor):
 def clip(it, min_val=-1.0, max_val=1.0):
     return (v for v in it if v >= min_val and v <= max_val)
 
-def _group(iterable, n):
+def chunk(iterable, n):
     return zip(*((iterable,) * n))
 
 # Formula from: http://subsynth.sourceforge.net/midinote2freq.html

@@ -29,7 +29,7 @@ def midi_to_freq(n):
 
 _DEFAULT_MIDI_TEMPO = 500000
 def play_midifile(mf, instruments):
-    audio = clip(mix(*[i for i in instruments.values()]))
+    out = clip(mix(*[i for i in instruments.values()]))
 
     seconds_per_tick = (_DEFAULT_MIDI_TEMPO / 1000000.0) / mf.ticks_per_beat
     for msg in mf:
@@ -40,7 +40,7 @@ def play_midifile(mf, instruments):
 
         if msg.delta > 0:
             n_samples = int(44100 * seconds_per_tick * msg.delta)
-            yield from islice(audio, n_samples)
+            yield from islice(out, n_samples)
 
         for channel, instrument in instruments.items():
             msg_channel = msg.get('channel')

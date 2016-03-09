@@ -1,9 +1,3 @@
-# TODO
-* Make synth play midi files.
-* Don't necessarily load whole MidiFile?
-* Profile.
-* Remove assertions.
+# aidio
 
-# General ideas
-* Coroutines to accept config changes in generators.
-* rtmidi/PortMidi for real-time stuff.
+Abusing Python generators for sound synthesis.
